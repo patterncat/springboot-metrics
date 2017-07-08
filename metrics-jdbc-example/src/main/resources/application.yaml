@@ -1,0 +1,41 @@
+#logging.level.org.apache.tomcat.jdbc.pool: ERROR
+spring:
+  metrics:
+    export:
+      enabled: true
+      send-latest: true
+      delay-millis: 1000
+      statsd:
+        host: 192.168.99.100
+        port: 8125
+        prefix: jpa-example
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://192.168.99.100:5432/postgres
+    username: postgres
+    password: 1q2w3e
+    jmx-enabled: true
+    tomcat:
+      initial-size: 10
+      max-active: 100
+      ## when pool sweeper is enabled, extra idle connection will be closed
+      max-idle: 50
+      ## when idle connection > min-idle, poolSweeper will start to close
+      min-idle: 10
+      # PoolSweeper run interval
+      time-between-eviction-runs-millis: 30000
+      remove-abandoned: true
+      # how long a connection should return,if not return regard as leak connection
+      remove-abandoned-timeout: 60
+      # how long a connection should return, or regard as probably leak connection
+      suspect-timeout: 60
+      log-abandoned: true
+      abandon-when-percentage-full: 50
+      # idle connection idle time before close
+      min-evictable-idle-time-millis: 60000
+      validation-query: select 1
+      validation-interval: 30000
+      jdbc-interceptors: cn.patterncat.metrics.tomcat.LogSlowQueryReport(threshold=1);ConnectionState
+  jpa:
+    hibernate.ddl-auto: update
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
