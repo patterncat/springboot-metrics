@@ -14,6 +14,7 @@
 	<modules>
 		<module>metrics-example</module>
 		<module>springboot-metrics-starter</module>
+		<module>metrics-jdbc-example</module>
 	</modules>
 
 	<properties>

@@ -11,6 +11,8 @@ The default spring boot actuator is good, but for some situation, it may not be 
 - jvm metrics
 
 # changelog
+## version 0.0.9
+add kafka metrics from mbean
 
 ## version 0.0.8
 
@@ -46,6 +48,6 @@ first version
 		<dependency>
 			<groupId>cn.patterncat</groupId>
 			<artifactId>springboot-metrics</artifactId>
-			<version>0.0.8</version>
+			<version>0.0.9</version>
 		</dependency>
 ```

@@ -5,6 +5,7 @@ import cn.patterncat.metrics.config.LinuxCondition;
 import cn.patterncat.metrics.config.TomcatCustomizer;
 import cn.patterncat.metrics.config.TomcatConfigEndpoint;
 import cn.patterncat.metrics.jvm.JvmTotalMetricSet;
+import cn.patterncat.metrics.kafka.KafkaMetricRegister;
 import cn.patterncat.metrics.network.NetstatMetricsSet;
 import cn.patterncat.metrics.system.OperatingSystemMetricSet;
 import cn.patterncat.metrics.tomcat.AdvancedTomcatMetrics;
@@ -12,7 +13,7 @@ import cn.patterncat.metrics.tomcat.TomcatDataSourceMetrics;
 import com.codahale.metrics.ConsoleReporter;
 import com.codahale.metrics.MetricRegistry;
 import org.apache.catalina.startup.Tomcat;
-import org.apache.tomcat.jdbc.pool.DataSource;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.autoconfigure.MetricRepositoryAutoConfiguration;
@@ -22,6 +23,7 @@ import org.springframework.boot.actuate.endpoint.SystemPublicMetrics;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
@@ -29,7 +31,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 import javax.servlet.Servlet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Created by patterncat on 2017-01-20.
@@ -43,6 +47,9 @@ public class MetricsAutoConfiguration {
 
     @Value("${spring.metrics.export.delay-millis:1000}")
     Long intervalInMillis;
+
+    @Value("#{'${spring.metrics.export.kafka.consumer-groups:}'.split(',')}")
+    Set<String> kafkaConsumerGroups;
 
 
     /**
@@ -152,6 +159,18 @@ public class MetricsAutoConfiguration {
     @ConditionalOnWebApplication
     public TomcatConfigEndpoint tomcatConfigEndpoint(TomcatCustomizer tomcatCustomizer){
         return new TomcatConfigEndpoint(tomcatCustomizer);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    @ConditionalOnProperty(value = "spring.metrics.export.kafka.enabled",havingValue = "true",matchIfMissing = false)
+    public KafkaMetricRegister kafkaMetricSet(){
+        Set<String> trimedSet = kafkaConsumerGroups.stream().filter(e -> StringUtils.isNotBlank(e))
+                .collect(Collectors.toSet());
+        KafkaMetricRegister kafkaMetricRegister = new KafkaMetricRegister(metricRegistry,trimedSet);
+        //NOTE 这里注册已经晚了,存在延时,因此是空的
+//        metricRegistry.register("kafka",kafkaMetricRegister);
+        return kafkaMetricRegister;
     }
 
 
